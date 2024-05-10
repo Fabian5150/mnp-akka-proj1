@@ -1,39 +1,81 @@
 package com.example;
 
 
+import akka.actor.ActorRef;
 import akka.actor.typed.Behavior;
-import akka.actor.typed.javadsl.AbstractBehavior;
-import akka.actor.typed.javadsl.ActorContext;
-import akka.actor.typed.javadsl.Behaviors;
-import akka.actor.typed.javadsl.Receive;
+import akka.actor.typed.javadsl.*;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.Queue;
 
 public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 {
     public interface  Message{}
     public  record Load(List<Packet> packets) implements  Message {}
     public record PickUpResponse (Optional<Packet> packet) implements Message {}
+    private record HandleFirstCustomer() implements Message{}
+    private record UnkownHandle() implements Message{}
+    private  TimerScheduler<DeliveryCar.Message> timer;
+    private Queue<Customer> customers; //queue of customer or Queue of ActorRef?
+   // private Queue<ActorRef> customers2;
+
+    private List<Packet> cargoArea;
+
+
     public static Behavior<DeliveryCar.Message> create() {
-        return Behaviors.setup(context -> new DeliveryCar(context));
+        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers)));
     }
     public DeliveryCar(ActorContext<DeliveryCar.Message> context)
     {
         super(context);
     }
+    public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers)
+    {
+        super(context);
+        this.timer=timers;
+
+
+
+    }
     @Override
     public Receive<DeliveryCar.Message> createReceive() {
         return newReceiveBuilder()
                 .onMessage(Load.class, this::onLoad).onMessage(PickUpResponse.class, this::onPickUpResponse)
+                .onMessage(HandleFirstCustomer.class, this::onHandleFirstCustomer)
                 .build();
     }
     private Behavior<DeliveryCar.Message> onLoad(Load l)
     {
+        cargoArea.addAll(l.packets);
+        timer.startSingleTimer(new HandleFirstCustomer(), Duration.ofSeconds(3));
         return Behaviors.stopped();
     }
     private Behavior<DeliveryCar.Message> onPickUpResponse (PickUpResponse pickUpResponse)
     {
+        return Behaviors.stopped();
+    }
+    private List<Packet> GetPacketsForCustomer(Customer customer )
+    {
+        List<Packet>res= List.of();
+        for (Packet packet:
+             cargoArea) {
+            if(packet.reciever().getClass().getName()==customer.getName())
+                res.add(packet);
+        }
+        return res;
+    }
+    private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
+    {
+        List<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
+        for (Packet packet :
+                firstCustomerPackets) {
+            packet.reciever().tell(new Customer.Delivery(packet));
+            cargoArea.remove(packet);
+
+        }
+
         return Behaviors.stopped();
     }
 

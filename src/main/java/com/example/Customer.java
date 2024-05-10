@@ -35,6 +35,11 @@ public  record Delivery(Packet packet) implements  Message {}
                 .onMessage(PickUp.class, this::onPickUp).onMessage(Delivery.class, this::onDeliveryMsg)
                 .build();
     }
+
+    public String getName() {
+        return name;
+    }
+
     private String getRandomItem()
     {
         return randomItems.get(ThreadLocalRandom.current().nextInt(0, randomItems.size()));
