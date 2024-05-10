@@ -4,6 +4,10 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.ThreadLocalRandom;
+
 public class Customer extends AbstractBehavior<Customer.Message>{
 
 public interface Message {}
@@ -17,6 +21,7 @@ public  record Delivery(Packet packet) implements  Message {}
     }
 
     private final String name;
+    private final List <String> randomItems = List.of("DishWasher", "Cd Room", "Dumbll", "Lighter", "Yogurt", "Pen" );
     private AdressBok addressBox;
 
     private Customer(ActorContext<Customer.Message> context, String name) {
@@ -30,12 +35,32 @@ public  record Delivery(Packet packet) implements  Message {}
                 .onMessage(PickUp.class, this::onPickUp).onMessage(Delivery.class, this::onDeliveryMsg)
                 .build();
     }
+    private String getRandomItem()
+    {
+        return randomItems.get(ThreadLocalRandom.current().nextInt(0, randomItems.size()));
+    }
+    private boolean WillSend()
+    {
+        return ThreadLocalRandom.current().nextInt(0,11)<=8;
+
+    }
     private Behavior<Message> onPickUp(PickUp msg)
     {
+        if(WillSend())
+        {
+            String Item = getRandomItem();
+            //ActorRef<Customer.Message> customer= AddressBook.GetRandomCustomer()
+            //msg.car.tell(new DeliverCar.PickUpResponse(Item, this.name, customer))
+        }
+        else
+        {
+            msg.car.tell(new DeliveryCar.PickUpResponse(Optional.empty()));
+        }
         return Behaviors.stopped();
     }
     private Behavior<Message> onDeliveryMsg(Delivery msg)
     {
+        this.getContext().getLog().info("I have received a Message : {} from {}", msg.packet.Name(), msg.packet.Sender());
         return Behaviors.stopped();
     }
 
