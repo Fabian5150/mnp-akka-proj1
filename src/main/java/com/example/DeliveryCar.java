@@ -62,7 +62,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
         List<Packet>res= List.of();
         for (Packet packet:
              cargoArea) {
-            if(packet.reciever().getClass().getName()==customer.getClass().getName())
+            if(packet.Receiver().getClass().getName()==customer.getClass().getName())
                 res.add(packet);
         }
         return res;
@@ -72,7 +72,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
         List<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
         for (Packet packet :
                 firstCustomerPackets) {
-            packet.reciever().tell(new Customer.Delivery(packet));
+            packet.Receiver().tell(new Customer.Delivery(packet));
             cargoArea.remove(packet);
 
 
