@@ -1,12 +1,13 @@
 package com.example;
 
 
-import akka.actor.ActorRef;
+import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
 import java.time.Duration;
 import java.util.ArrayList;
+
 import java.util.Optional;
 import java.util.Queue;
 
@@ -18,7 +19,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     private record HandleFirstCustomer() implements Message{}
     private record UnkownHandle() implements Message{}
     private  TimerScheduler<DeliveryCar.Message> timer;
-    private Queue<AbstractBehavior<Customer.Message>> customers; //queue of customer or Queue of ActorRef?
+    private Queue<ActorRef<Customer.Message>> customers; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
 
     private ArrayList<Packet> cargoArea;
@@ -57,21 +58,24 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         return Behaviors.stopped();
     }
-    private ArrayList<Packet> GetPacketsForCustomer(AbstractBehavior<Customer.Message> customer )
+    private ArrayList<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
     {
         ArrayList<Packet>res= new ArrayList<>();
         for (Packet packet:
              cargoArea) {
-            if(packet.Receiver().getClass().getName().equals( customer.getClass().getName()))
+
+            if(packet.Receiver().equals( customer))
                 res.add(packet);
         }
         return res;
     }
+
     private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
     {
         ArrayList<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
         for (Packet packet :
                 firstCustomerPackets) {
+
             packet.Receiver().tell(new Customer.Delivery(packet));
             cargoArea.remove(packet);
 
