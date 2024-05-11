@@ -81,7 +81,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     }
     private  Behavior<Message> OnInit( Init msg)
     {
-        this.addressBox= msg.addressBox;
+        this.addressBook= msg.addressBox;
         return Behaviors.stopped();
     }
 
