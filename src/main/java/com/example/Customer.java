@@ -49,9 +49,6 @@ public class Customer extends AbstractBehavior<Customer.Message> {
                 .build();
     }
 
-    public String getName() {
-        return name;
-    }
 
     private String getRandomItem() {
         return randomItems.get(ThreadLocalRandom.current().nextInt(0, randomItems.size()));
@@ -70,17 +67,17 @@ public class Customer extends AbstractBehavior<Customer.Message> {
         } else {
             msg.car().tell(new DeliveryCar.PickUpResponse(Optional.empty()));
         }
-        return Behaviors.stopped();
+        return this;
     }
 
     private Behavior<Message> onDeliveryMsg(Delivery msg) {
         this.getContext().getLog().info("I have received a Message : {} from {}", msg.packet.Name(), msg.packet.Sender());
-        return Behaviors.stopped();
+        return this;
     }
     private  Behavior<Message> OnInit( Init msg)
     {
         this.addressBook= msg.addressBox;
-        return Behaviors.stopped();
+        return this;
     }
     //Wenn AdressBook eine Bestätigung zurückgibt, hat nun Customer Alle Infos zum Erstellen erine PickUpResponse,
     // Wir haben den Wagenreferenz von PickUp Nachricht auch schon in GetRandomCustomerResponse Nachricht,

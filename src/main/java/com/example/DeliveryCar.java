@@ -28,10 +28,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public static Behavior<DeliveryCar.Message> create() {
         return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers)));
     }
-    public DeliveryCar(ActorContext<DeliveryCar.Message> context)
-    {
-        super(context);
-    }
+
 
     public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers)
     {
@@ -52,11 +49,11 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         cargoArea.addAll(l.packets);
         timer.startSingleTimer(new HandleFirstCustomer(), Duration.ofSeconds(3));
-        return Behaviors.stopped();
+        return this;
     }
     private Behavior<DeliveryCar.Message> onPickUpResponse (PickUpResponse pickUpResponse)
     {
-        return Behaviors.stopped();
+        return this;
     }
     private ArrayList<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
     {
@@ -82,7 +79,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 
         }
 
-        return Behaviors.stopped();
+        return this;
     }
 
 
