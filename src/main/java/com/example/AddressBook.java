@@ -11,15 +11,15 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
 
     public interface Message {}
 
-    public static record GetRandomCustomer(ActorRef<Customer.Message> customer, ActorRef<DeliveryCar.Message> car) implements Message { }
-    public static record CustomerArray(ActorRef<Customer.Message>[] customers) implements Message { }
+    public record GetRandomCustomer(ActorRef<Customer.Message> customer, ActorRef<DeliveryCar.Message> car) implements Message { }
+    public record CustomerArray(ActorRef<Customer.Message>[] customers) implements Message { }
 
     private AddressBook(ActorContext<Message> context){
         super(context);
     }
 
     public static Behavior<AddressBook.Message> create() {
-        return Behaviors.setup(context -> new AddressBook(context));
+        return Behaviors.setup(AddressBook::new);
     }
 
     @Override
