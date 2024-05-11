@@ -13,7 +13,7 @@ public class Customer extends AbstractBehavior<Customer.Message>{
 public interface Message {}
 public  record PickUp(ActorRef<DeliveryCar.Message> car) implements  Message {}
 public  record Delivery(Packet packet) implements  Message {}
-
+public record RandomCustomer(ActorRef<Customer.Message> receiver) implements Message {}
 
 
     public static Behavior<Customer.Message> create(String name) {
@@ -21,8 +21,8 @@ public  record Delivery(Packet packet) implements  Message {}
     }
 
     private final String name;
-    private final List <String> randomItems = List.of("DishWasher", "Cd Room", "Dumbll", "Lighter", "Yogurt", "Pen" );
-    private AdressBok addressBox;
+    private final List <String> randomItems = List.of("DishWasher", "Cd Room", "Dumbbell", "Lighter", "Yogurt", "Pen" );
+    private AddressBook addressBook;
 
     private Customer(ActorContext<Customer.Message> context, String name) {
         super(context);

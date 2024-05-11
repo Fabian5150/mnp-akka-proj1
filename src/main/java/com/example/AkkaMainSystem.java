@@ -24,11 +24,23 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Create> {
 
     private Behavior<Create> onCreate(Create command) {
         //#create-actors
-        ActorRef<ExampleActor.Message> a = this.getContext().spawn(ExampleActor.create("Alice"), "alice");
-        ActorRef<ExampleTimerActor.Message> b = this.getContext().spawn(ExampleTimerActor.create(), "timeractor");
+        /* Wir erstellen zu erst das Adressbuch, damit wir den Empfängern direkt dessen Referenz übergeben können.
+        Das Adressbuch erhält dann als erste Nachricht des Systems die Referenzen zu den nach ihm erstellten Empfängern */
+        var addressbook = this.getContext().spawn(AddressBook.create(), "addressbook");
+        var cust1 = this.getContext().spawn(Customer.create("Cust1"), "cust1");
+        var cust2 = this.getContext().spawn(Customer.create("Cust2"), "cust2");
+        var cust3 = this.getContext().spawn(Customer.create("Cust3"), "cust3");
+        var cust4 = this.getContext().spawn(Customer.create("Cust4"), "cust4");
         //#create-actors
 
-        a.tell(new ExampleActor.ExampleMessage(this.getContext().getSelf(),"Test123"));
+        // Customer dem Adressbuch übergeben
+        addressbook.tell(new AddressBook.CustomerArray(new ActorRef[]{cust1, cust2, cust3, cust4}));
+
+        /* TEST */
+        addressbook.tell(new AddressBook.GetRandomCustomer(cust1));
+        addressbook.tell(new AddressBook.GetRandomCustomer(cust2));
+        addressbook.tell(new AddressBook.GetRandomCustomer(cust3));
+        /* TEST */
         return this;
     }
 }
