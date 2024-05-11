@@ -6,14 +6,14 @@ import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
 import java.time.Duration;
-import java.util.List;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Queue;
 
 public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 {
     public interface  Message{}
-    public  record Load(List<Packet> packets) implements  Message {}
+    public  record Load(ArrayList<Packet> packets) implements  Message {}
     public record PickUpResponse (Optional<Packet> packet) implements Message {}
     private record HandleFirstCustomer() implements Message{}
     private record UnkownHandle() implements Message{}
@@ -21,7 +21,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     private Queue<AbstractBehavior<Customer.Message>> customers; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
 
-    private List<Packet> cargoArea;
+    private ArrayList<Packet> cargoArea;
 
 
     public static Behavior<DeliveryCar.Message> create() {
@@ -57,19 +57,19 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         return Behaviors.stopped();
     }
-    private List<Packet> GetPacketsForCustomer(AbstractBehavior<Customer.Message> customer )
+    private ArrayList<Packet> GetPacketsForCustomer(AbstractBehavior<Customer.Message> customer )
     {
-        List<Packet>res= List.of();
+        ArrayList<Packet>res= new ArrayList<>();
         for (Packet packet:
              cargoArea) {
-            if(packet.Receiver().getClass().getName()==customer.getClass().getName())
+            if(packet.Receiver().getClass().getName().equals( customer.getClass().getName()))
                 res.add(packet);
         }
         return res;
     }
     private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
     {
-        List<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
+        ArrayList<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
         for (Packet packet :
                 firstCustomerPackets) {
             packet.Receiver().tell(new Customer.Delivery(packet));
