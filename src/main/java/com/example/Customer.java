@@ -57,15 +57,17 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     }
 
     private boolean WillSend() {
-        return ThreadLocalRandom.current().nextInt(0, 11) <= 8;
+        return ThreadLocalRandom.current().nextInt(0, 11) >= 8;
 
     }
 
     private Behavior<Message> onPickUp(PickUp msg) {
         if (WillSend()) {
             String Item = getRandomItem();
-            //ActorRef<Customer.Message> customer= AddressBook.GetRandomCustomer()
-            //msg.car.tell(new DeliverCar.PickUpResponse(Item, this.name, customer))
+            //Should be replaced with AdressBook.GetRandomCustomer()
+            ActorRef<Customer.Message> customer= getContext().spawn(Customer.create("Temp"), "Temp");
+
+            msg.car.tell(new DeliveryCar.PickUpResponse(Optional.of(new Packet(Item, this.getName(), customer))));
         } else {
             msg.car.tell(new DeliveryCar.PickUpResponse(Optional.empty()));
         }
