@@ -20,7 +20,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     public record Delivery(Packet packet) implements Message {
     }
 
-    public record Init(AddressBook addressBox) implements Message {
+    public record Init(ActorRef<AddressBook.Message> addressBox) implements Message {
     }
 
     public record GetRandomCustomerResponse(ActorRef<Customer.Message> receiver, ActorRef<DeliveryCar.Message> car) implements Message {}
@@ -32,7 +32,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
 
     private final String name;
     private final List <String> randomItems = List.of("DishWasher", "Cd Room", "Dumbbell", "Lighter", "Yogurt", "Pen" );
-    private AddressBook addressBook;
+    private ActorRef<AddressBook.Message> addressBook;
 
 
     private Customer(ActorContext<Customer.Message> context, String name) {
@@ -46,12 +46,10 @@ public class Customer extends AbstractBehavior<Customer.Message> {
                 .onMessage(PickUp.class, this::onPickUp).
                 onMessage(Delivery.class, this::onDeliveryMsg)
                 .onMessage(Init.class, this::OnInit)
+                .onMessage(GetRandomCustomerResponse.class, this::OnGetRandomCustomerResponse)
                 .build();
     }
 
-    public String getName() {
-        return name;
-    }
 
     private String getRandomItem() {
         return randomItems.get(ThreadLocalRandom.current().nextInt(0, randomItems.size()));
@@ -64,25 +62,33 @@ public class Customer extends AbstractBehavior<Customer.Message> {
 
     private Behavior<Message> onPickUp(PickUp msg) {
         if (WillSend()) {
-            String Item = getRandomItem();
-            //Should be replaced with AdressBook.GetRandomCustomer()
-            ActorRef<Customer.Message> customer= getContext().spawn(Customer.create("Temp"), "Temp");
-
-            msg.car.tell(new DeliveryCar.PickUpResponse(Optional.of(new Packet(Item, this.getName(), customer))));
+            //addressbook bekommt eine Referenz auf self, um wieder zurück zu schicken, msg.car() ist notwendig, um danach weiter schicken
+            // beim Empfangen einer GetRandomCustomerResponse Nachricht
+           addressBook.tell(new AddressBook.GetRandomCustomer(this.getContext().getSelf(), msg.car()));
         } else {
-            msg.car.tell(new DeliveryCar.PickUpResponse(Optional.empty()));
+            msg.car().tell(new DeliveryCar.PickUpResponse(Optional.empty()));
         }
-        return Behaviors.stopped();
+        return this;
     }
 
     private Behavior<Message> onDeliveryMsg(Delivery msg) {
         this.getContext().getLog().info("I have received a Message : {} from {}", msg.packet.Name(), msg.packet.Sender());
-        return Behaviors.stopped();
+        return this;
     }
     private  Behavior<Message> OnInit( Init msg)
     {
         this.addressBook= msg.addressBox;
-        return Behaviors.stopped();
+        return this;
+    }
+    //Wenn AdressBook eine Bestätigung zurückgibt, hat nun Customer Alle Infos zum Erstellen erine PickUpResponse,
+    // Wir haben den Wagenreferenz von PickUp Nachricht auch schon in GetRandomCustomerResponse Nachricht,
+    private Behavior<Message>OnGetRandomCustomerResponse(GetRandomCustomerResponse randomCustomerResponse)
+    {
+        String Item= getRandomItem();
+        Packet packetToSendToCar= new Packet(Item, this.name, randomCustomerResponse.receiver);
+        DeliveryCar.PickUpResponse pickUpResponse= new DeliveryCar.PickUpResponse(Optional.of(packetToSendToCar));
+        randomCustomerResponse.car().tell(pickUpResponse);
+        return this;
     }
 
 }
