@@ -7,6 +7,7 @@ import akka.actor.typed.javadsl.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Random;
 
 public class DistributionCenter extends AbstractBehavior<DistributionCenter.Message>{
     private ActorRef[] custArr;
@@ -14,20 +15,18 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
 
     public interface Message {};
 
+    public record Arrive(ActorRef<DeliveryCar.Message> car, ArrayList<Packet> packets) implements Message {}
+
     private DistributionCenter(ActorContext<Message> context, ActorRef[] custArr) {
         super(context);
+        this.custArr = custArr;
+        // Erstelle DeliveryCars //
         //context.spawn(DeliveryCar.create(createRoute()), "car1");
         //context.spawn(DeliveryCar.create(createRoute()), "car2");
         //context.spawn(DeliveryCar.create(createRoute()), "car3");
         //context.spawn(DeliveryCar.create(createRoute()), "car4");
-        this.custArr = custArr;
-        createRoute();
-        createRoute();
-        createRoute();
-    }
+        //
 
-    public static Behavior<DistributionCenter.Message> create(ActorRef[] custArr) {
-        return Behaviors.setup(context -> new DistributionCenter(context, custArr));
     }
 
     private ArrayList<ActorRef> createRoute(){
@@ -36,10 +35,11 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         route.addAll(Arrays.asList(custArr));
         Collections.shuffle(route);
 
-        getContext().getLog().info(route.get(0).toString());
-        getContext().getLog().info(route.get(3).toString());
-
         return route;
+    }
+
+    public static Behavior<DistributionCenter.Message> create(ActorRef[] custArr) {
+        return Behaviors.setup(context -> new DistributionCenter(context, custArr));
     }
 
     @Override
@@ -47,5 +47,20 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         return newReceiveBuilder()
                 //.onMessage()
                 .build();
+    }
+
+    private Behavior<Message> onArrive(Arrive arrive) {
+        // Füge alle Pakete dem Lagerraum hinzu
+        stockRoom.addAll(arrive.packets);
+        // Sende dem Paketwagen 3 zufällige Pakete
+        ArrayList<Packet> cargo = new ArrayList<>();
+        for (int i = 0; i < 3; i++) {
+            if(stockRoom.isEmpty()) break;
+            cargo.add(arrive.packets.get(new Random().nextInt(stockRoom.size())));
+        }
+
+        arrive.car.tell(new DeliveryCar.Load(cargo));
+
+        return this;
     }
 }

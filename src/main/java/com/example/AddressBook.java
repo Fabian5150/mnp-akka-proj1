@@ -57,8 +57,4 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
         }
         return this;
     }
-
-    private void myMethod (ActorRef<Customer.Message> customer){
-
-    }
 }
