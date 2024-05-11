@@ -18,7 +18,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     private record HandleFirstCustomer() implements Message{}
     private record UnkownHandle() implements Message{}
     private  TimerScheduler<DeliveryCar.Message> timer;
-    private Queue<Customer> customers; //queue of customer or Queue of ActorRef?
+    private Queue<AbstractBehavior<Customer.Message>> customers; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
 
     private List<Packet> cargoArea;
@@ -31,6 +31,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         super(context);
     }
+
     public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers)
     {
         super(context);
@@ -56,12 +57,12 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         return Behaviors.stopped();
     }
-    private List<Packet> GetPacketsForCustomer(Customer customer )
+    private List<Packet> GetPacketsForCustomer(AbstractBehavior<Customer.Message> customer )
     {
         List<Packet>res= List.of();
         for (Packet packet:
              cargoArea) {
-            if(packet.reciever().getClass().getName()==customer.getName())
+            if(packet.reciever().getClass().getName()==customer.getClass().getName())
                 res.add(packet);
         }
         return res;
@@ -73,6 +74,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
                 firstCustomerPackets) {
             packet.reciever().tell(new Customer.Delivery(packet));
             cargoArea.remove(packet);
+
 
         }
 
