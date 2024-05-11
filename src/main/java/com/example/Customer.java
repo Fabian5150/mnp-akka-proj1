@@ -20,7 +20,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     public record Delivery(Packet packet) implements Message {
     }
 
-    public record Init(AdressBok addressBox) implements Message {
+    public record Init(AddressBook addressBox) implements Message {
     }
 
     public record RandomCustomer(ActorRef<Customer.Message> receiver) implements Message {}
