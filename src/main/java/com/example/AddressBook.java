@@ -11,7 +11,7 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
 
     public interface Message {}
 
-    public static record GetRandomCustomer(ActorRef<Customer.Message> customer) implements Message { }
+    public static record GetRandomCustomer(ActorRef<Customer.Message> customer, ActorRef<DeliveryCar.Message> car) implements Message { }
     public static record CustomerArray(ActorRef<Customer.Message>[] customers) implements Message { }
 
     private AddressBook(ActorContext<Message> context){
@@ -30,6 +30,11 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
                 .build();
     }
 
+    /*
+    * Erhält vom Customer auch das DeliveryCar, an das das Paket übergeben werden soll und
+    * übergibt dessen Referenz wieder an den Customer über GetRandomCustomerResponse, damit
+    * der Customer diese Referenz auch in onGetRandomCustomerResponse zur Verfügung hat
+    * */
     private Behavior<Message> onGetRandomCustomer(GetRandomCustomer request) {
         if(customers == null){
             getContext().getLog().info("I don't have a customer list yet. :/");
@@ -38,7 +43,7 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
 
         ActorRef<Customer.Message> randomCust = customers[new Random().nextInt(customers.length)];
         //getContext().getLog().info("GetRandomCustomer: {} for {}", randomCust, request.customer);
-        request.customer.tell(new Customer.RandomCustomer(randomCust));
+        request.customer.tell(new Customer.GetRandomCustomerResponse(randomCust, request.car));
         return this;
     }
 
