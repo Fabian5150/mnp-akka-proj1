@@ -46,6 +46,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
                 .onMessage(PickUp.class, this::onPickUp).
                 onMessage(Delivery.class, this::onDeliveryMsg)
                 .onMessage(Init.class, this::OnInit)
+                .onMessage(GetRandomCustomerResponse.class, this::OnGetRandomCustomerResponse)
                 .build();
     }
 
