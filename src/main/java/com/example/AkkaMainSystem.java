@@ -37,9 +37,9 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Create> {
         addressbook.tell(new AddressBook.CustomerArray(new ActorRef[]{cust1, cust2, cust3, cust4}));
 
         /* TEST */
-        addressbook.tell(new AddressBook.GetRandomCustomer(cust1));
-        addressbook.tell(new AddressBook.GetRandomCustomer(cust2));
-        addressbook.tell(new AddressBook.GetRandomCustomer(cust3));
+        //addressbook.tell(new AddressBook.GetRandomCustomer(cust1));
+        //addressbook.tell(new AddressBook.GetRandomCustomer(cust2));
+        //addressbook.tell(new AddressBook.GetRandomCustomer(cust3));
         /* TEST */
         return this;
     }

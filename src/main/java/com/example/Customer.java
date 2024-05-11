@@ -23,7 +23,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     public record Init(AddressBook addressBox) implements Message {
     }
 
-    public record RandomCustomer(ActorRef<Customer.Message> receiver) implements Message {}
+    public record GetRandomCustomerResponse(ActorRef<Customer.Message> receiver, ActorRef<DeliveryCar.Message> car) implements Message {}
 
 
     public static Behavior<Customer.Message> create(String name) {
