@@ -10,7 +10,8 @@ import java.util.ArrayList;
 
 import java.util.Optional;
 import java.util.Queue;
-
+import java.util.stream.Collectors;
+import java.util.List;
 public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 {
     public interface  Message{}
@@ -57,21 +58,23 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     {
         return this;
     }
-    private ArrayList<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
+    private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
     {
-        ArrayList<Packet>res= new ArrayList<>();
+      /*  ArrayList<Packet>res= new ArrayList<>();
         for (Packet packet:
              cargoArea) {
 
             if(packet.Receiver().equals( customer))
                 res.add(packet);
-        }
-        return res;
+        }*/
+        return this.cargoArea.stream()
+                .filter(packet -> packet.Receiver().equals(customer)).
+                collect(Collectors.toList());
     }
 
     private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
     {
-        ArrayList<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
+        List<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
         for (Packet packet :
                 firstCustomerPackets) {
 
