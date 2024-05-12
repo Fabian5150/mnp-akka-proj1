@@ -56,7 +56,7 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     }
 
     private boolean WillSend() {
-        return ThreadLocalRandom.current().nextInt(0, 11) >= 8;
+        return ThreadLocalRandom.current().nextInt(0, 11) <= 8;
 
     }
 
