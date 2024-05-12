@@ -7,7 +7,7 @@ import akka.actor.typed.javadsl.*;
 import java.util.*;
 
 public class DistributionCenter extends AbstractBehavior<DistributionCenter.Message>{
-    private ActorRef[] custArr;
+    private final ActorRef<Customer.Message>[] custArr;
     private ArrayList<Packet> stockRoom = new ArrayList<>();
 
     public interface Message {};
@@ -23,13 +23,12 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         //context.spawn(DeliveryCar.create(createRoute()), "car3");
         //context.spawn(DeliveryCar.create(createRoute()), "car4");
         //
-
     }
 
-    private Queue<ActorRef> createRoute(){
-        Queue<ActorRef> route = new ArrayDeque<>(4);
+    private Queue<ActorRef<Customer.Message>> createRoute(){
+        Queue<ActorRef<Customer.Message>> route = new ArrayDeque<>(4);
 
-        List<ActorRef> tempList = new ArrayList<>(Arrays.asList(custArr));
+        List<ActorRef<Customer.Message>> tempList = new ArrayList<>(Arrays.asList(custArr));
         Collections.shuffle(tempList);
 
         route.addAll(tempList);

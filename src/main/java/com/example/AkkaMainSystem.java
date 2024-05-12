@@ -35,7 +35,7 @@ public class AkkaMainSystem extends AbstractBehavior<AkkaMainSystem.Create> {
         var cust4 = this.getContext().spawn(Customer.create("Cust4"), "cust4");
 
         // Customer dem Adressbuch übergeben
-        ActorRef[] custArr = new ActorRef[]{cust1, cust2, cust3, cust4};
+        ActorRef<Customer.Message>[] custArr = new ActorRef[]{cust1, cust2, cust3, cust4};
         addressbook.tell(new AddressBook.CustomerArray(custArr));
 
         var distributionCenter = this.getContext().spawn(DistributionCenter.create(custArr),"distributionCenter");
