@@ -4,10 +4,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Random;
+import java.util.*;
 
 public class DistributionCenter extends AbstractBehavior<DistributionCenter.Message>{
     private ActorRef[] custArr;
@@ -29,11 +26,13 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
 
     }
 
-    private ArrayList<ActorRef> createRoute(){
-        ArrayList<ActorRef> route = new ArrayList<>(4);
+    private Queue<ActorRef> createRoute(){
+        Queue<ActorRef> route = new ArrayDeque<>(4);
 
-        route.addAll(Arrays.asList(custArr));
-        Collections.shuffle(route);
+        List<ActorRef> tempList = new ArrayList<>(Arrays.asList(custArr));
+        Collections.shuffle(tempList);
+
+        route.addAll(tempList);
 
         return route;
     }
