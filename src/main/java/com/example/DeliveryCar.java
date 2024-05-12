@@ -18,22 +18,24 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public record PickUpResponse (Optional<Packet> packet) implements Message {}
     private record HandleFirstCustomer() implements Message{}
     private record UnkownHandle() implements Message{}
-    private  TimerScheduler<DeliveryCar.Message> timer;
-    private Queue<ActorRef<Customer.Message>> customers; //queue of customer or Queue of ActorRef?
+    private final TimerScheduler<DeliveryCar.Message> timer;
+    private Queue<ActorRef<Customer.Message>> customersRoute; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
 
     private ArrayList<Packet> cargoArea;
 
 
-    public static Behavior<DeliveryCar.Message> create() {
-        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers)));
+    public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route) {
+        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers,route)));
     }
 
 
-    public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers)
+    public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers, Queue<ActorRef<Customer.Message>> route)
     {
         super(context);
         this.timer=timers;
+        this.customersRoute= route;
+
 
 
 
@@ -69,7 +71,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 
     private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
     {
-        ArrayList<Packet> firstCustomerPackets= GetPacketsForCustomer(customers.peek());
+        ArrayList<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
         for (Packet packet :
                 firstCustomerPackets) {
 
