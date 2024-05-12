@@ -54,7 +54,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         ArrayList<Packet> cargo = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             if(stockRoom.isEmpty()) break;
-            cargo.add(arrive.packets.get(new Random().nextInt(stockRoom.size())));
+            cargo.add(stockRoom.remove(new Random().nextInt(stockRoom.size())));
         }
 
         arrive.car.tell(new DeliveryCar.Load(cargo));
