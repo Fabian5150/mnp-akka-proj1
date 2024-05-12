@@ -43,7 +43,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
     @Override
     public Receive<DistributionCenter.Message> createReceive() {
         return newReceiveBuilder()
-                //.onMessage()
+                .onMessage(Arrive.class, this::onArrive)
                 .build();
     }
 
