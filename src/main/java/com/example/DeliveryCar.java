@@ -17,25 +17,29 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public interface  Message{}
     public  record Load(ArrayList<Packet> packets) implements  Message {}
     public record PickUpResponse (Optional<Packet> packet) implements Message {}
-    private record HandleFirstCustomer() implements Message{}
+    private record LoadHandler() implements Message{}
     private record UnkownHandle() implements Message{}
     private final TimerScheduler<DeliveryCar.Message> timer;
     private Queue<ActorRef<Customer.Message>> customersRoute; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
 
     private ArrayList<Packet> cargoArea;
+    private ActorRef<DistributionCenter.Message> distributionCenterActorRef;
 
 
-    public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route) {
-        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers,route)));
+    public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route,
+                                                       ActorRef<DistributionCenter.Message> initializingDistributionCenter) {
+        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers,route, initializingDistributionCenter)));
     }
 
 
-    public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers, Queue<ActorRef<Customer.Message>> route)
+    public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers,
+                       Queue<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter)
     {
         super(context);
         this.timer=timers;
         this.customersRoute= route;
+        this.distributionCenterActorRef= initialzingDistributionCenter;
 
 
 
@@ -45,17 +49,19 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public Receive<DeliveryCar.Message> createReceive() {
         return newReceiveBuilder()
                 .onMessage(Load.class, this::onLoad).onMessage(PickUpResponse.class, this::onPickUpResponse)
-                .onMessage(HandleFirstCustomer.class, this::onHandleFirstCustomer)
+                .onMessage(LoadHandler.class, this::onLoadHandler)
                 .build();
     }
     private Behavior<DeliveryCar.Message> onLoad(Load l)
     {
         cargoArea.addAll(l.packets);
-        timer.startSingleTimer(new HandleFirstCustomer(), Duration.ofSeconds(3));
+        timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(3));
         return this;
     }
     private Behavior<DeliveryCar.Message> onPickUpResponse (PickUpResponse pickUpResponse)
     {
+        pickUpResponse.packet.ifPresent(cargoArea::add);
+
         return this;
     }
     private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
@@ -72,8 +78,9 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
                 collect(Collectors.toList());
     }
 
-    private Behavior<DeliveryCar.Message> onHandleFirstCustomer(HandleFirstCustomer f)
+    private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f)
     {
+
         List<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
         for (Packet packet :
                 firstCustomerPackets) {
