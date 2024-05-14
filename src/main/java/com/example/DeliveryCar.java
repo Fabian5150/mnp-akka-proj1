@@ -25,21 +25,25 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 
     private ArrayList<Packet> cargoArea;
     private ActorRef<DistributionCenter.Message> distributionCenterActorRef;
+    private String name;
 
 
     public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route,
-                                                       ActorRef<DistributionCenter.Message> initializingDistributionCenter) {
-        return Behaviors.setup(context -> Behaviors.withTimers(timers -> new DeliveryCar(context, timers,route, initializingDistributionCenter)));
+                                                       ActorRef<DistributionCenter.Message> initializingDistributionCenter, String name) {
+        return Behaviors.setup(context -> Behaviors.withTimers(timers ->
+                new DeliveryCar(context, timers,route, initializingDistributionCenter, name)));
     }
 
 
     public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers,
-                       Queue<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter)
+                       Queue<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter,
+                       String name)
     {
         super(context);
         this.timer=timers;
         this.customersRoute= route;
         this.distributionCenterActorRef= initialzingDistributionCenter;
+        this.name=name;
 
 
 
@@ -60,7 +64,14 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     }
     private Behavior<DeliveryCar.Message> onPickUpResponse (PickUpResponse pickUpResponse)
     {
-        pickUpResponse.packet.ifPresent(cargoArea::add);
+        pickUpResponse.packet.ifPresent(thePacket ->
+        {
+            cargoArea.add(thePacket);
+            getContext().getLog().info("I ({}) have now {} packets when recieving pickUpResponse", this.name, this.cargoArea.size());
+            this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
+        }
+        );
+
 
         return this;
     }
@@ -70,13 +81,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     }
     private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
     {
-      /*  ArrayList<Packet>res= new ArrayList<>();
-        for (Packet packet:
-             cargoArea) {
 
-            if(packet.Receiver().equals( customer))
-                res.add(packet);
-        }*/
         return this.cargoArea.stream()
                 .filter(packet -> packet.Receiver().equals(customer)).
                 collect(Collectors.toList());
