@@ -18,11 +18,11 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         super(context);
         this.custArr = custArr;
         // Erstelle DeliveryCars //
-        //context.spawn(DeliveryCar.create(createRoute()), "car1");
-        //context.spawn(DeliveryCar.create(createRoute()), "car2");
-        //context.spawn(DeliveryCar.create(createRoute()), "car3");
-        //context.spawn(DeliveryCar.create(createRoute()), "car4");
-        //
+        context.spawn(DeliveryCar.create(createRoute(),this.getContext().getSelf(), "car1"), "car1");
+        context.spawn(DeliveryCar.create(createRoute(),this.getContext().getSelf(), "car2"), "car2");
+        context.spawn(DeliveryCar.create(createRoute(),this.getContext().getSelf(), "car3"), "car3");
+        context.spawn(DeliveryCar.create(createRoute(),this.getContext().getSelf(), "car4"), "car4");
+
     }
 
     private Queue<ActorRef<Customer.Message>> createRoute(){
