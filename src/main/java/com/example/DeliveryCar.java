@@ -80,6 +80,13 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f)
     {
+        if(customersRoute.isEmpty())
+        {
+            ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
+            cargoArea.clear();
+            this.distributionCenterActorRef.tell(new DistributionCenter.Arrive(this.getContext().getSelf(), remainingPackets));
+            return this;
+        }
 
         List<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
         for (Packet packet :
