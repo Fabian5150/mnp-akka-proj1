@@ -18,7 +18,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public  record Load(ArrayList<Packet> packets) implements  Message {}
     public record PickUpResponse (Optional<Packet> packet) implements Message {}
     private record LoadHandler() implements Message{}
-    private record UnkownHandle() implements Message{}
+
     private final TimerScheduler<DeliveryCar.Message> timer;
     private Queue<ActorRef<Customer.Message>> customersRoute; //queue of customer or Queue of ActorRef?
    // private Queue<ActorRef> customers2;
@@ -64,6 +64,10 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
 
         return this;
     }
+    private boolean IsThereARoom()
+    {
+        return this.cargoArea.size()<3;
+    }
     private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
     {
       /*  ArrayList<Packet>res= new ArrayList<>();
@@ -77,6 +81,12 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
                 .filter(packet -> packet.Receiver().equals(customer)).
                 collect(Collectors.toList());
     }
+    private void DeliverCustomerPacketsAndRemoveThem(ActorRef<Customer.Message> customerToDeliver)
+    {
+        List<Packet> customerPackets= GetPacketsForCustomer(customerToDeliver);
+        customerPackets.forEach(packet -> customerToDeliver.tell(new Customer.Delivery(packet)));
+        cargoArea.removeAll(customerPackets);
+    }
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f)
     {
@@ -85,20 +95,25 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
             this.distributionCenterActorRef.tell(new DistributionCenter.Arrive(this.getContext().getSelf(), remainingPackets));
-            return this;
-        }
-
-        List<Packet> firstCustomerPackets= GetPacketsForCustomer(customersRoute.peek());
-        for (Packet packet :
-                firstCustomerPackets) {
-
-            packet.Receiver().tell(new Customer.Delivery(packet));
-            cargoArea.remove(packet);
-
+           return this;
 
         }
+
+        // We still have customers to serve
+
+
+            ActorRef<Customer.Message> firstCustomerOnTheRoute= customersRoute.poll();
+            //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
+            if(IsThereARoom())
+                firstCustomerOnTheRoute.tell(new Customer.PickUp(this.getContext().getSelf()));
+            else
+                this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
+
+            DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
 
         return this;
+
+
     }
 
 
