@@ -25,13 +25,11 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         var car4 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car4"), "car4");
     }
 
-    private Queue<ActorRef<Customer.Message>> createRoute(){
-        Queue<ActorRef<Customer.Message>> route = new ArrayDeque<>(4);
+    private ArrayList<ActorRef<Customer.Message>> createRoute(){
+        ArrayList<ActorRef<Customer.Message>> route = new ArrayList<>(4);
 
-        List<ActorRef<Customer.Message>> tempList = new ArrayList<>(Arrays.asList(custArr));
-        Collections.shuffle(tempList);
-
-        route.addAll(tempList);
+        route.addAll(Arrays.asList(custArr));
+        Collections.shuffle(route);
 
         return route;
     }

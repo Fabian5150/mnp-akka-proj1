@@ -8,7 +8,6 @@ import java.time.Duration;
 import java.util.ArrayList;
 
 import java.util.Optional;
-import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.List;
 
@@ -26,15 +25,16 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     }
 
     private final TimerScheduler<DeliveryCar.Message> timer;
-    private Queue<ActorRef<Customer.Message>> customerRoute;
+    private final ArrayList<ActorRef<Customer.Message>> customerRoute;
+    private int routeIndex = 0; // to store the current address
 
     private ArrayList<Packet> cargoArea = new ArrayList<>();
-    private ActorRef<DistributionCenter.Message> distributionCenterActorRef;
-    private String name;
+    private final ActorRef<DistributionCenter.Message> distributionCenterActorRef;
+    private final String name;
 
 
     public static Behavior<DeliveryCar.Message> create(
-            Queue<ActorRef<Customer.Message>> route,
+            ArrayList<ActorRef<Customer.Message>> route,
             ActorRef<DistributionCenter.Message> initializingDistributionCenter, String name)
     {
         return Behaviors.setup(context -> Behaviors.withTimers(timers ->
@@ -43,7 +43,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
 
 
     public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers,
-                       Queue<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter,
+                       ArrayList<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter,
                        String name) {
         super(context);
         this.timer = timers;
@@ -51,6 +51,9 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         this.distributionCenterActorRef = initialzingDistributionCenter;
         this.name = name;
         context.getLog().info("I, Delivery car '{}' was created", name);
+        
+        // Starte die erste Route
+        context.getSelf().tell(new LoadHandler());
     }
 
     @Override
@@ -65,6 +68,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     private Behavior<DeliveryCar.Message> onLoad(Load l) {
         cargoArea.addAll(l.packets);
         timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(3));
+
         return this;
     }
 
@@ -98,13 +102,15 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     }
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
-        ActorRef<Customer.Message> nextCustomer = customerRoute.poll();
-        getContext().getLog().info("I {} am currently at {}'s house", name, nextCustomer);
+        ActorRef<Customer.Message> nextCustomer = customerRoute.get(routeIndex++);
+        getContext().getLog().info("I ({}) am currently at {}'s house", name, nextCustomer);
 
-        if (customerRoute.isEmpty()) { // TBD: (Wo) wird die Route wieder "aufgefüllt"?
+        if (routeIndex > 3) { // => Car ist am Ende seiner Route
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
             this.distributionCenterActorRef.tell(new DistributionCenter.Arrive(this.getContext().getSelf(), remainingPackets));
+
+            routeIndex = 0;
 
             return this;
         }
