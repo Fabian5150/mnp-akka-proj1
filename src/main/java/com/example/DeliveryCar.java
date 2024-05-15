@@ -97,13 +97,18 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
 
     private void DeliverCustomerPacketsAndRemoveThem(ActorRef<Customer.Message> customerToDeliver) {
         List<Packet> customerPackets = GetPacketsForCustomer(customerToDeliver);
-        customerPackets.forEach(packet -> customerToDeliver.tell(new Customer.Delivery(packet)));
+        customerPackets.forEach(
+                packet -> {
+                    customerToDeliver.tell(new Customer.Delivery(packet));
+                    getContext().getLog().info("Delivered {} to {}", packet.Name(), packet.Receiver());
+                }
+        );
         cargoArea.removeAll(customerPackets);
     }
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
         ActorRef<Customer.Message> nextCustomer = customerRoute.get(routeIndex++);
-        getContext().getLog().info("I ({}) am currently at {}'s house", name, nextCustomer);
+        getContext().getLog().info("I, ({}) am currently at: {}", name, nextCustomer);
 
         if (routeIndex > 3) { // => Car ist am Ende seiner Route
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
