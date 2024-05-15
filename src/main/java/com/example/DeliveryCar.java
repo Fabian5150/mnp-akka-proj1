@@ -1,6 +1,5 @@
 package com.example;
 
-
 import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
@@ -27,10 +26,9 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     }
 
     private final TimerScheduler<DeliveryCar.Message> timer;
-    private Queue<ActorRef<Customer.Message>> customersRoute; //queue of customer or Queue of ActorRef?
-    // private Queue<ActorRef> customers2;
+    private Queue<ActorRef<Customer.Message>> customerRoute;
 
-    private ArrayList<Packet> cargoArea;
+    private ArrayList<Packet> cargoArea = new ArrayList<>();
     private ActorRef<DistributionCenter.Message> distributionCenterActorRef;
     private String name;
 
@@ -47,7 +45,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
                        String name) {
         super(context);
         this.timer = timers;
-        this.customersRoute = route;
+        this.customerRoute = route;
         this.distributionCenterActorRef = initialzingDistributionCenter;
         this.name = name;
     }
@@ -55,7 +53,8 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     @Override
     public Receive<DeliveryCar.Message> createReceive() {
         return newReceiveBuilder()
-                .onMessage(Load.class, this::onLoad).onMessage(PickUpResponse.class, this::onPickUpResponse)
+                .onMessage(Load.class, this::onLoad)
+                .onMessage(PickUpResponse.class, this::onPickUpResponse)
                 .onMessage(LoadHandler.class, this::onLoadHandler)
                 .build();
     }
@@ -70,7 +69,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         pickUpResponse.packet.ifPresent(thePacket ->
                 {
                     cargoArea.add(thePacket);
-                    getContext().getLog().info("I ({}) have now {} packets when recieving pickUpResponse", this.name, this.cargoArea.size());
+                    getContext().getLog().info("I ({}) have now {} packets when receiving pickUpResponse", this.name, this.cargoArea.size());
                     this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
                 }
         );
@@ -82,7 +81,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         return this.cargoArea.size() < 3;
     }
 
-    private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer) {
+    private List<Packet> GetPacketsForCustomer(ActorRef<Customer.Message> customer) {
 
         return this.cargoArea.stream()
                 .filter(packet -> packet.Receiver().equals(customer)).
@@ -96,30 +95,25 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     }
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
-        if (customersRoute.isEmpty()) {
+        if (customerRoute.isEmpty()) { // TBD: (Wo) wird die Route wieder "aufgefüllt"?
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
             this.distributionCenterActorRef.tell(new DistributionCenter.Arrive(this.getContext().getSelf(), remainingPackets));
-            return this;
 
+            return this;
         }
 
         // We still have customers to serve
 
+        ActorRef<Customer.Message> firstCustomerOnTheRoute = customerRoute.poll();
 
-        ActorRef<Customer.Message> firstCustomerOnTheRoute = customersRoute.poll();
+        DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
         //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
         if (IsThereARoom())
             firstCustomerOnTheRoute.tell(new Customer.PickUp(this.getContext().getSelf()));
         else
             this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
 
-        DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
-
         return this;
-
-
     }
-
-
 }
