@@ -12,16 +12,23 @@ import java.util.Optional;
 import java.util.Queue;
 import java.util.stream.Collectors;
 import java.util.List;
-public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
-{
-    public interface  Message{}
-    public  record Load(ArrayList<Packet> packets) implements  Message {}
-    public record PickUpResponse (Optional<Packet> packet) implements Message {}
-    private record LoadHandler() implements Message{}
+
+public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
+    public interface Message {
+    }
+
+    public record Load(ArrayList<Packet> packets) implements Message {
+    }
+
+    public record PickUpResponse(Optional<Packet> packet) implements Message {
+    }
+
+    private record LoadHandler() implements Message {
+    }
 
     private final TimerScheduler<DeliveryCar.Message> timer;
     private Queue<ActorRef<Customer.Message>> customersRoute; //queue of customer or Queue of ActorRef?
-   // private Queue<ActorRef> customers2;
+    // private Queue<ActorRef> customers2;
 
     private ArrayList<Packet> cargoArea;
     private ActorRef<DistributionCenter.Message> distributionCenterActorRef;
@@ -31,24 +38,20 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
     public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route,
                                                        ActorRef<DistributionCenter.Message> initializingDistributionCenter, String name) {
         return Behaviors.setup(context -> Behaviors.withTimers(timers ->
-                new DeliveryCar(context, timers,route, initializingDistributionCenter, name)));
+                new DeliveryCar(context, timers, route, initializingDistributionCenter, name)));
     }
 
 
     public DeliveryCar(ActorContext<DeliveryCar.Message> context, TimerScheduler<DeliveryCar.Message> timers,
                        Queue<ActorRef<Customer.Message>> route, ActorRef<DistributionCenter.Message> initialzingDistributionCenter,
-                       String name)
-    {
+                       String name) {
         super(context);
-        this.timer=timers;
-        this.customersRoute= route;
-        this.distributionCenterActorRef= initialzingDistributionCenter;
-        this.name=name;
-
-
-
-
+        this.timer = timers;
+        this.customersRoute = route;
+        this.distributionCenterActorRef = initialzingDistributionCenter;
+        this.name = name;
     }
+
     @Override
     public Receive<DeliveryCar.Message> createReceive() {
         return newReceiveBuilder()
@@ -56,65 +59,62 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message>
                 .onMessage(LoadHandler.class, this::onLoadHandler)
                 .build();
     }
-    private Behavior<DeliveryCar.Message> onLoad(Load l)
-    {
+
+    private Behavior<DeliveryCar.Message> onLoad(Load l) {
         cargoArea.addAll(l.packets);
         timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(3));
         return this;
     }
-    private Behavior<DeliveryCar.Message> onPickUpResponse (PickUpResponse pickUpResponse)
-    {
-        pickUpResponse.packet.ifPresent(thePacket ->
-        {
-            cargoArea.add(thePacket);
-            getContext().getLog().info("I ({}) have now {} packets when recieving pickUpResponse", this.name, this.cargoArea.size());
-            this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
-        }
-        );
 
+    private Behavior<DeliveryCar.Message> onPickUpResponse(PickUpResponse pickUpResponse) {
+        pickUpResponse.packet.ifPresent(thePacket ->
+                {
+                    cargoArea.add(thePacket);
+                    getContext().getLog().info("I ({}) have now {} packets when recieving pickUpResponse", this.name, this.cargoArea.size());
+                    this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
+                }
+        );
 
         return this;
     }
-    private boolean IsThereARoom()
-    {
-        return this.cargoArea.size()<3;
+
+    private boolean IsThereARoom() {
+        return this.cargoArea.size() < 3;
     }
-    private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer )
-    {
+
+    private List<Packet> GetPacketsForCustomer(akka.actor.typed.ActorRef<Customer.Message> customer) {
 
         return this.cargoArea.stream()
                 .filter(packet -> packet.Receiver().equals(customer)).
                 collect(Collectors.toList());
     }
-    private void DeliverCustomerPacketsAndRemoveThem(ActorRef<Customer.Message> customerToDeliver)
-    {
-        List<Packet> customerPackets= GetPacketsForCustomer(customerToDeliver);
+
+    private void DeliverCustomerPacketsAndRemoveThem(ActorRef<Customer.Message> customerToDeliver) {
+        List<Packet> customerPackets = GetPacketsForCustomer(customerToDeliver);
         customerPackets.forEach(packet -> customerToDeliver.tell(new Customer.Delivery(packet)));
         cargoArea.removeAll(customerPackets);
     }
 
-    private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f)
-    {
-        if(customersRoute.isEmpty())
-        {
+    private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
+        if (customersRoute.isEmpty()) {
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
             this.distributionCenterActorRef.tell(new DistributionCenter.Arrive(this.getContext().getSelf(), remainingPackets));
-           return this;
+            return this;
 
         }
 
         // We still have customers to serve
 
 
-            ActorRef<Customer.Message> firstCustomerOnTheRoute= customersRoute.poll();
-            //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
-            if(IsThereARoom())
-                firstCustomerOnTheRoute.tell(new Customer.PickUp(this.getContext().getSelf()));
-            else
-                this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
+        ActorRef<Customer.Message> firstCustomerOnTheRoute = customersRoute.poll();
+        //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
+        if (IsThereARoom())
+            firstCustomerOnTheRoute.tell(new Customer.PickUp(this.getContext().getSelf()));
+        else
+            this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
 
-            DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
+        DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
 
         return this;
 
