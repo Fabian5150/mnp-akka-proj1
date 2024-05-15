@@ -16,6 +16,7 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
 
     private AddressBook(ActorContext<Message> context){
         super(context);
+        context.getLog().info("Address book was created.");
     }
 
     public static Behavior<AddressBook.Message> create() {

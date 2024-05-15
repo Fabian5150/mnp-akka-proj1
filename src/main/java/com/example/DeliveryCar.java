@@ -33,8 +33,10 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     private String name;
 
 
-    public static Behavior<DeliveryCar.Message> create(Queue<ActorRef<Customer.Message>> route,
-                                                       ActorRef<DistributionCenter.Message> initializingDistributionCenter, String name) {
+    public static Behavior<DeliveryCar.Message> create(
+            Queue<ActorRef<Customer.Message>> route,
+            ActorRef<DistributionCenter.Message> initializingDistributionCenter, String name)
+    {
         return Behaviors.setup(context -> Behaviors.withTimers(timers ->
                 new DeliveryCar(context, timers, route, initializingDistributionCenter, name)));
     }
@@ -48,6 +50,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         this.customerRoute = route;
         this.distributionCenterActorRef = initialzingDistributionCenter;
         this.name = name;
+        context.getLog().info("I, Delivery car '{}' was created", name);
     }
 
     @Override
@@ -69,7 +72,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         pickUpResponse.packet.ifPresent(thePacket ->
                 {
                     cargoArea.add(thePacket);
-                    getContext().getLog().info("I ({}) have now {} packets when receiving pickUpResponse", this.name, this.cargoArea.size());
+                    getContext().getLog().info("I, ({}) have now {} packets when receiving pickUpResponse", this.name, this.cargoArea.size());
                     this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
                 }
         );
@@ -95,6 +98,9 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
     }
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
+        ActorRef<Customer.Message> nextCustomer = customerRoute.poll();
+        getContext().getLog().info("I {} am currently at {}'s house", name, nextCustomer);
+
         if (customerRoute.isEmpty()) { // TBD: (Wo) wird die Route wieder "aufgefüllt"?
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
@@ -105,12 +111,10 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
 
         // We still have customers to serve
 
-        ActorRef<Customer.Message> firstCustomerOnTheRoute = customerRoute.poll();
-
-        DeliverCustomerPacketsAndRemoveThem(firstCustomerOnTheRoute);
+        DeliverCustomerPacketsAndRemoveThem(nextCustomer);
         //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
         if (IsThereARoom())
-            firstCustomerOnTheRoute.tell(new Customer.PickUp(this.getContext().getSelf()));
+            nextCustomer.tell(new Customer.PickUp(this.getContext().getSelf()));
         else
             this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
 

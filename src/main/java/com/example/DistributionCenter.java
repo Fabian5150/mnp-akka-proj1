@@ -17,11 +17,12 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
     private DistributionCenter(ActorContext<Message> context, ActorRef[] custArr) {
         super(context);
         this.custArr = custArr;
-        // Erstelle DeliveryCars //
-        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car1"), "car1");
-        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car2"), "car2");
-        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car3"), "car3");
-        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car4"), "car4");
+        // Erstelle die Paketwagen //
+        context.getLog().info("The DistributionCenter was created.");
+        var car1 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car1"), "car1");
+        var car2 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car2"), "car2");
+        var car3 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car3"), "car3");
+        var car4 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car4"), "car4");
     }
 
     private Queue<ActorRef<Customer.Message>> createRoute(){

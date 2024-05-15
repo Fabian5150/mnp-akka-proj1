@@ -29,12 +29,13 @@ public class Customer extends AbstractBehavior<Customer.Message> {
 
     private final String name;
     private final List <String> randomItems = List.of("DishWasher", "Cd Room", "Dumbbell", "Lighter", "Yogurt", "Pen" );
-    private ActorRef<AddressBook.Message> addressBookRef;
+    private final ActorRef<AddressBook.Message> addressBookRef;
 
     private Customer(ActorContext<Customer.Message> context, String name, ActorRef<AddressBook.Message> addressBookRef) {
         super(context);
         this.name = name;
         this.addressBookRef = addressBookRef;
+        context.getLog().info("I, Customer '{}' was created", name);
     }
 
     @Override
