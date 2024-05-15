@@ -4,7 +4,7 @@ import akka.actor.typed.ActorRef;
 import akka.actor.typed.Behavior;
 import akka.actor.typed.javadsl.*;
 
-import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class AddressBook extends AbstractBehavior<AddressBook.Message> {
     private ActorRef<Customer.Message>[] customers;
@@ -41,7 +41,7 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
             return this;
         }
 
-        ActorRef<Customer.Message> randomCust = customers[new Random().nextInt(customers.length)];
+        ActorRef<Customer.Message> randomCust = customers[ThreadLocalRandom.current().nextInt(customers.length)];
         //getContext().getLog().info("GetRandomCustomer: {} for {}", randomCust, request.customer);
         request.customer.tell(new Customer.GetRandomCustomerResponse(randomCust, request.car));
         return this;
@@ -53,7 +53,7 @@ public class AddressBook extends AbstractBehavior<AddressBook.Message> {
     private Behavior<Message> onCustomerArray(CustomerArray arr) {
         if(customers == null){
             customers = arr.customers;
-            getContext().getLog().info("Received {} customers", customers.length);
+            getContext().getLog().info("Address book received {} customers.", customers.length);
         }
         return this;
     }
