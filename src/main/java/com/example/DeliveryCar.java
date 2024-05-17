@@ -77,9 +77,10 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
                 {
                     cargoArea.add(thePacket);
                     getContext().getLog().info("I, ({}) have now {} packets when receiving pickUpResponse", this.name, this.cargoArea.size());
-                    this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
+
                 }
         );
+        this.timer.startSingleTimer(new LoadHandler(), Duration.ofSeconds(1));
 
         return this;
     }
