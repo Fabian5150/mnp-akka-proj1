@@ -100,7 +100,7 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         customerPackets.forEach(
                 packet -> {
                     customerToDeliver.tell(new Customer.Delivery(packet));
-                    getContext().getLog().info("Delivered {} to {}", packet.Name(), packet.Receiver());
+                    getContext().getLog().info("Delivered {} to {} from car {}", packet.Name(), packet.Receiver(), this.name);
                 }
         );
         cargoArea.removeAll(customerPackets);
