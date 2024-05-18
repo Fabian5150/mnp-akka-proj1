@@ -49,7 +49,6 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
     private Behavior<Message> onArrive(Arrive arrive) {
         // Füge alle Pakete dem Lagerraum hinzu
         stockRoom.addAll(arrive.packets);
-        getContext().getLog().info("There are currently {} packets in the distribution center.", stockRoom.size());
         // Sende dem Paketwagen 3 zufällige Pakete
         ArrayList<Packet> cargo = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -58,7 +57,6 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         }
 
         arrive.car.tell(new DeliveryCar.Load(cargo));
-        getContext().getLog().info("Gave {} packets to {}", cargo.size(), arrive.car);
         getContext().getLog().info("There are currently {} packets in the distribution center.", stockRoom.size());
         // Wagen kommen hier ununterbrochen an und liefern 3 Pakete aus und nehmen wieder 3, aber es werden irgendwann keine Pakete mehr über pickup empfangen
         // => Fehler muss in Customer bzw. Kommunikattion zw. Customer und Delivery Car sein
