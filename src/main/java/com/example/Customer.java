@@ -77,10 +77,11 @@ public class Customer extends AbstractBehavior<Customer.Message> {
     // Wir haben den Wagenreferenz von PickUp Nachricht auch schon in GetRandomCustomerResponse Nachricht,
     private Behavior<Message>OnGetRandomCustomerResponse(GetRandomCustomerResponse response)
     {
-        String Item = getRandomItem();
-        Packet packetToSendToCar = new Packet(Item, this.name, response.receiver);
+        String item = getRandomItem();
+        Packet packetToSendToCar = new Packet(item, this.name, response.receiver);
         DeliveryCar.PickUpResponse pickUpResponse = new DeliveryCar.PickUpResponse(Optional.of(packetToSendToCar));
         response.car().tell(pickUpResponse);
+        getContext().getLog().info("Sending {} to {}", item, response.receiver);
         return this;
     }
 
