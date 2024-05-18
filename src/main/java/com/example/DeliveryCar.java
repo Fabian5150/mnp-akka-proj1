@@ -100,7 +100,6 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
         customerPackets.forEach(
                 packet -> {
                     customerToDeliver.tell(new Customer.Delivery(packet));
-                    //getContext().getLog().info("Delivered {} to {} from car {}", packet.Name(), packet.Receiver(), this.name);
                 }
         );
         cargoArea.removeAll(customerPackets);
@@ -108,8 +107,8 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
 
     private Behavior<DeliveryCar.Message> onLoadHandler(LoadHandler f) {
         ActorRef<Customer.Message> nextCustomer = customerRoute.get(this.routeIndex++);
-        //getContext().getLog().info("I, ({}) am currently at: {}", name, nextCustomer);
 
+        DeliverCustomerPacketsAndRemoveThem(nextCustomer);
         if (this.routeIndex > 3) { // => Car ist am Ende seiner Route
             ArrayList<Packet> remainingPackets = new ArrayList<>(this.cargoArea);
             cargoArea.clear();
@@ -120,12 +119,8 @@ public class DeliveryCar extends AbstractBehavior<DeliveryCar.Message> {
             return this;
         }
 
-        // We still have customers to serve
-
-        DeliverCustomerPacketsAndRemoveThem(nextCustomer);
         //As said in the assignment, the Checking if there is a place to pickUp at should not depend on the customer or his packets.
         if (IsThereARoom()) {
-            getContext().getLog().info("PICKING UP SOME PARCELS");
             nextCustomer.tell(new Customer.PickUp(this.getContext().getSelf()));
         }
         else {
