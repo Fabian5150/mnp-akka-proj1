@@ -17,12 +17,13 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
     private DistributionCenter(ActorContext<Message> context, ActorRef[] custArr) {
         super(context);
         this.custArr = custArr;
-        // Erstelle die Paketwagen //
         context.getLog().info("The DistributionCenter was created.");
-        var car1 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car1"), "car1");
-        var car2 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car2"), "car2");
-        var car3 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car3"), "car3");
-        var car4 = context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car4"), "car4");
+        // Erstelle die Paketwagen //
+
+        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car1"), "car1");
+        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car2"), "car2");
+        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car3"), "car3");
+        context.spawn(DeliveryCar.create(createRoute(), this.getContext().getSelf(), "car4"), "car4");
     }
 
     private ArrayList<ActorRef<Customer.Message>> createRoute(){
@@ -56,6 +57,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         }
 
         arrive.car.tell(new DeliveryCar.Load(cargo));
+        getContext().getLog().info("There are currently {} packets in the DeliveryCenter.", cargo.size());
 
         return this;
     }
