@@ -14,7 +14,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
 
     public record Arrive(ActorRef<DeliveryCar.Message> car, ArrayList<Packet> packets) implements Message {}
 
-    private DistributionCenter(ActorContext<Message> context, ActorRef[] custArr) {
+    private DistributionCenter(ActorContext<Message> context, ActorRef<Customer.Message>[] custArr) {
         super(context);
         this.custArr = custArr;
         context.getLog().info("The DistributionCenter was created.");
@@ -35,7 +35,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         return route;
     }
 
-    public static Behavior<DistributionCenter.Message> create(ActorRef[] custArr) {
+    public static Behavior<DistributionCenter.Message> create(ActorRef<Customer.Message>[] custArr) {
         return Behaviors.setup(context -> new DistributionCenter(context, custArr));
     }
 
@@ -49,6 +49,7 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
     private Behavior<Message> onArrive(Arrive arrive) {
         // Füge alle Pakete dem Lagerraum hinzu
         stockRoom.addAll(arrive.packets);
+        getContext().getLog().info("There are currently {} packets in the distribution center.", stockRoom.size());
         // Sende dem Paketwagen 3 zufällige Pakete
         ArrayList<Packet> cargo = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
@@ -57,7 +58,10 @@ public class DistributionCenter extends AbstractBehavior<DistributionCenter.Mess
         }
 
         arrive.car.tell(new DeliveryCar.Load(cargo));
-        getContext().getLog().info("There are currently {} packets in the DeliveryCenter.", cargo.size());
+        getContext().getLog().info("Gave {} packets to {}", cargo.size(), arrive.car);
+        getContext().getLog().info("There are currently {} packets in the distribution center.", stockRoom.size());
+        // Wagen kommen hier ununterbrochen an und liefern 3 Pakete aus und nehmen wieder 3, aber es werden irgendwann keine Pakete mehr über pickup empfangen
+        // => Fehler muss in Customer bzw. Kommunikattion zw. Customer und Delivery Car sein
 
         return this;
     }
