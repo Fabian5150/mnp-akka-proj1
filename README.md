@@ -83,8 +83,8 @@ The simulation consists of the following actor types:
 ## Getting Started
 
 ### Prerequisites
-- Java JDK 11 or higher / Scala 2.13+
-- sbt (Scala Build Tool) or Maven/Gradle
+- Java JDK 11 or higher
+-  Maven/Gradle
 
 ### Running the Simulation
 
@@ -113,14 +113,14 @@ The simulation will continuously output:
 mnp-akka-proj1/
 ├── src/
 │   └── main/
-│       └── [java/scala]/
-│           ├── Main.[java/scala]
-│           ├── AddressBook.[java/scala]
-│           ├── Customer.[java/scala]
-│           ├── DeliveryCar.[java/scala]
-│           ├── DistributionCenter.[java/scala]
-│           └── Package.[java/scala]
-├── build.sbt / pom.xml
+│       └── [java/
+│           ├── Main.java
+│           ├── AddressBook.java
+│           ├── Customer.java
+│           ├── DeliveryCar.java
+│           ├── DistributionCenter.java
+│           └── Package.java
+├── pom.xml
 └── README.md
 ```
 
